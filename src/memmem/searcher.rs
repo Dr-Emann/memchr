@@ -630,10 +630,8 @@ impl Prefilter {
         if rarest_rank > MAX_FALLBACK_RANK {
             None
         } else {
-            let finder = crate::arch::all::packedpair::Finder::with_pair(
-                needle,
-                pair.clone(),
-            )?;
+            let finder =
+                crate::arch::all::packedpair::Finder::with_pair(needle, pair)?;
             let call = prefilter_kind_fallback;
             let kind = PrefilterKind { fallback: finder };
             Some(Prefilter { call, kind, rarest_byte, rarest_offset })
@@ -915,7 +913,7 @@ impl PrefilterState {
         // `skipped` to overflow a `u32`. (And we use a `u32` to reduce the
         // size of a prefilter state.)
         self.skipped = match u32::try_from(skipped) {
-            Err(_) => core::u32::MAX,
+            Err(_) => u32::MAX,
             Ok(skipped) => self.skipped.saturating_add(skipped),
         };
     }
