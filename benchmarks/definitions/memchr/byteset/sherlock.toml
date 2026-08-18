@@ -1,0 +1,123 @@
+# Byte sets over English prose. The needles of each benchmark are what decide
+# which kernel `memchr_n` builds, so the names say which one is measured:
+#
+#   smallset*  - a pair of nibble lookups, for a set of at most 8 bytes
+#   nibble*    - one shuffle, for a set whose bytes share a nibble
+#   anybyte*   - a bitset probe, for everything else
+#   range*     - two comparisons, for a contiguous set
+
+analysis = '''
+Byte set searches over Sherlock Holmes, one benchmark per kernel that
+`memchr_n` can select.
+'''
+
+[[bench]]
+model = "count-bytes"
+name = "huge-smallset5"
+regex = ['a', 'e', 'i', 'o', 'u']
+haystack = { path = "sherlock/huge.txt" }
+count = 165_302
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "huge-smallset8"
+regex = [' ', '\n', '.', ',', '"', '?', '!', ';']
+haystack = { path = "sherlock/huge.txt" }
+count = 131_288
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+# Ten letters that all share the high nibble 0x6, which is what lets a single
+# shuffle decide the whole set.
+[[bench]]
+model = "count-bytes"
+name = "huge-nibble10"
+regex = ['a', 'b', 'c', 'e', 'f', 'g', 'i', 'j', 'k', 'm']
+haystack = { path = "sherlock/huge.txt" }
+count = 166_682
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+# The same size as the benchmark above, but spread over both letter cases, so
+# neither nibble is constant and the bitset probe has to run.
+[[bench]]
+model = "count-bytes"
+name = "huge-anybyte10"
+regex = ['a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U']
+haystack = { path = "sherlock/huge.txt" }
+count = 170_839
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "huge-anybyte21"
+regex = [
+  'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n',
+  'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z',
+]
+haystack = { path = "sherlock/huge.txt" }
+count = 267_663
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "huge-range-lower"
+regex = '\x61\x7A'
+haystack = { path = "sherlock/huge.txt" }
+count = 432_965
+engines = [
+  "rust/memchr-n/range",
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range/onlycount",
+]
+
+# Short haystacks, where the cost of everything outside the chunk loop shows up.
+
+[[bench]]
+model = "count-bytes"
+name = "small-smallset5"
+regex = ['a', 'e', 'i', 'o', 'u']
+haystack = { path = "sherlock/small.txt" }
+count = 183
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "small-range-lower"
+regex = '\x61\x7A'
+haystack = { path = "sherlock/small.txt" }
+count = 489
+engines = [
+  "rust/memchr-n/range",
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range/onlycount",
+]

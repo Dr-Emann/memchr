@@ -1,0 +1,77 @@
+analysis = '''
+Byte set searches over Rust source code, the sets a lexer or a JSON style
+scanner would look for.
+'''
+
+[[bench]]
+model = "count-bytes"
+name = "brackets8"
+regex = ['(', ')', '[', ']', '{', '}', '<', '>']
+haystack = { path = "code/rust-library.rs" }
+count = 108_675
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+# Everything that ends an identifier, so most of the haystack matches.
+[[bench]]
+model = "count-bytes"
+name = "anybyte13"
+regex = [
+  ' ', '\t', '\n', '\r', '(', ')', '[', ']', '{', '}', ',', ';', ':',
+]
+haystack = { path = "code/rust-library.rs" }
+count = 593_951
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+# Large enough that `memchr_n` stops keeping the bytes in an array and builds
+# the set as a bitset.
+[[bench]]
+model = "count-bytes"
+name = "anybyte28"
+regex = [
+  '!', '"', '#', '$', '%', '&', '(', ')', '*', '+', ',', '-', '/', ':',
+  ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '{', '|', '}', '~',
+]
+haystack = { path = "code/rust-library.rs" }
+count = 263_011
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "range-digit"
+regex = '\x30\x39'
+haystack = { path = "code/rust-library.rs" }
+count = 28_928
+engines = [
+  "rust/memchr-n/range",
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range/onlycount",
+]
+
+# Finding the non-ASCII bytes in mostly ASCII input: a rare match over a big
+# haystack, which is the case a range kernel should be fastest on.
+[[bench]]
+model = "count-bytes"
+name = "range-nonascii"
+regex = '\x80\xFF'
+haystack = { path = "code/rust-library.rs" }
+count = 4_430
+engines = [
+  "rust/memchr-n/range",
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range/onlycount",
+]

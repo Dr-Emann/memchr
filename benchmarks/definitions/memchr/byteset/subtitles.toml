@@ -1,0 +1,72 @@
+analysis = '''
+Byte set searches over non-ASCII UTF-8, where the interesting sets are the
+ones that pick out lead and continuation bytes.
+'''
+
+[[bench]]
+model = "count-bytes"
+name = "ru-range-nonascii"
+regex = '\x80\xFF'
+haystack = { path = "opensubtitles/ru-huge.txt" }
+count = 530_024
+engines = [
+  "rust/memchr-n/range",
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range/onlycount",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "zh-range-nonascii"
+regex = '\x80\xFF'
+haystack = { path = "opensubtitles/zh-huge.txt" }
+count = 467_069
+engines = [
+  "rust/memchr-n/range",
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range/onlycount",
+]
+
+# The lead bytes of the three byte sequences that most of this haystack is
+# made of.
+[[bench]]
+model = "count-bytes"
+name = "zh-range-lead3"
+regex = '\xE0\xEF'
+haystack = { path = "opensubtitles/zh-huge.txt" }
+count = 155_675
+engines = [
+  "rust/memchr-n/range",
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range/onlycount",
+]
+
+# Nine bytes that all share the low nibble 0x0, which is the other half of the
+# single shuffle kernel: here the shuffle is indexed by the high nibble.
+[[bench]]
+model = "count-bytes"
+name = "ru-nibble9"
+regex = [
+  '\x20', '\x30', '\x40', '\x50', '\x60', '\x70', '\x80', '\x90', '\xA0',
+]
+haystack = { path = "opensubtitles/ru-huge.txt" }
+count = 59_156
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "en-smallset8"
+regex = [' ', '\n', '.', ',', '"', '?', '!', ';']
+haystack = { path = "opensubtitles/en-huge.txt" }
+count = 149_316
+engines = [
+  "rust/memchr-n/byteset",
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset/build",
+  "rust/memchr-n/byteset/onlycount",
+]

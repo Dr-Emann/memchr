@@ -1,0 +1,218 @@
+# The word-at-a-time ladder, from one byte up past what `memchr` can express.
+#
+# `memchr` stops at three bytes, so its `fallback` engines anchor the first
+# three rungs and nothing but `memchr_n` runs the rest. The rungs above three
+# are what the file exists for: `range` is two comparisons per word, the same
+# shape as the one and two byte kernels, while `anybyte` leaves SWAR entirely
+# and probes a bitset one byte at a time. `naive` is the byte-at-a-time floor
+# both are measured against.
+#
+# Each shared rung includes both runtime-dispatched engines and their forced
+# SWAR counterparts. This makes the SIMD and SWAR comparisons independent.
+
+analysis = '''
+Byte searches over Sherlock Holmes, one benchmark per rung of the ladder that
+`memchr_n` falls back to. The one through three byte rungs compare the public,
+runtime-dispatched APIs and forced SWAR implementations side by side.
+
+The `never` group matches nothing, so it measures scan throughput alone. The
+`common` group grows the same set one byte at a time, so it includes the cost
+of reporting a progressively denser set of matches.
+'''
+
+# Nothing matches, so every engine scans the whole haystack and no time goes to
+# reporting matches.
+
+[[bench]]
+model = "count-bytes"
+name = "huge-never1"
+regex = '<'
+haystack = { path = "sherlock/huge.txt" }
+count = 0
+engines = [
+  "rust/memchr/memchr/prebuilt",
+  "rust/memchr/memchr/fallback",
+  "rust/memchr/memchr/naive",
+  "rust/memchr-n/memchr/prebuilt",
+  "rust/memchr-n/memchr/scalar",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "huge-never2"
+regex = ['<', '>']
+haystack = { path = "sherlock/huge.txt" }
+count = 0
+engines = [
+  "rust/memchr/memchr2",
+  "rust/memchr/memchr2/fallback",
+  "rust/memchr/memchr2/naive",
+  "rust/memchr-n/memchr2",
+  "rust/memchr-n/memchr2/scalar",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "huge-never3"
+regex = ['<', '>', '=']
+haystack = { path = "sherlock/huge.txt" }
+count = 0
+engines = [
+  "rust/memchr/memchr3",
+  "rust/memchr/memchr3/fallback",
+  "rust/memchr/memchr3/naive",
+  "rust/memchr-n/memchr3",
+  "rust/memchr-n/memchr3/scalar",
+]
+
+# The first rung past `memchr`. The three bytes above are contiguous and this
+# one adds a byte far away from them, so the set cannot fold into a range and
+# the scalar backend has nothing left but the bytewise bitset probe.
+[[bench]]
+model = "count-bytes"
+name = "huge-never4"
+regex = ['<', '>', '=', '~']
+haystack = { path = "sherlock/huge.txt" }
+count = 0
+engines = [
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset",
+]
+
+# Three times the bytes of the rung above, which the bitset probe should not
+# care about: it is one lookup per byte either way.
+[[bench]]
+model = "count-bytes"
+name = "huge-never12"
+regex = [
+  '\x00', '\x01', '\x0B', '\x0E', '\x1F', '\x2B',
+  '\x5C', '\x5E', '\x7B', '\x7F', '\x90', '\xFF',
+]
+haystack = { path = "sherlock/huge.txt" }
+count = 0
+engines = [
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset",
+]
+
+# The same size of set as the rung above, but contiguous, so it stays in SWAR
+# as two comparisons per word instead of falling to the bytewise probe.
+[[bench]]
+model = "count-bytes"
+name = "huge-never-range"
+regex = '\x7B\x9F'
+haystack = { path = "sherlock/huge.txt" }
+count = 0
+engines = [
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range",
+]
+
+# The same ladder at a match density typical of English prose, so the cost of
+# reporting matches is in the measurement too. Each rung adds one byte to the
+# set above it.
+
+[[bench]]
+model = "count-bytes"
+name = "huge-common1"
+regex = 'a'
+haystack = { path = "sherlock/huge.txt" }
+count = 35_301
+engines = [
+  "rust/memchr/memchr/prebuilt",
+  "rust/memchr/memchr/fallback",
+  "rust/memchr/memchr/naive",
+  "rust/memchr-n/memchr/prebuilt",
+  "rust/memchr-n/memchr/scalar",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "huge-common2"
+regex = ['a', 't']
+haystack = { path = "sherlock/huge.txt" }
+count = 74_569
+engines = [
+  "rust/memchr/memchr2",
+  "rust/memchr/memchr2/fallback",
+  "rust/memchr/memchr2/naive",
+  "rust/memchr-n/memchr2",
+  "rust/memchr-n/memchr2/scalar",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "huge-common3"
+regex = ['a', 't', 'o']
+haystack = { path = "sherlock/huge.txt" }
+count = 109_064
+engines = [
+  "rust/memchr/memchr3",
+  "rust/memchr/memchr3/fallback",
+  "rust/memchr/memchr3/naive",
+  "rust/memchr-n/memchr3",
+  "rust/memchr-n/memchr3/scalar",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "huge-common4"
+regex = ['a', 't', 'o', 'h']
+haystack = { path = "sherlock/huge.txt" }
+count = 137_365
+engines = [
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset",
+]
+
+# 'a' through 'f', picked because it matches about as often as the four byte
+# rung above, so the two differ in kernel and not in how much work reporting
+# the matches is.
+[[bench]]
+model = "count-bytes"
+name = "huge-common-range"
+regex = '\x61\x66'
+haystack = { path = "sherlock/huge.txt" }
+count = 134_691
+engines = [
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range",
+]
+
+# A haystack short enough that everything outside the chunk loop shows up.
+
+[[bench]]
+model = "count-bytes"
+name = "small-common3"
+regex = ['a', 't', 'o']
+haystack = { path = "sherlock/small.txt" }
+count = 117
+engines = [
+  "rust/memchr/memchr3",
+  "rust/memchr/memchr3/fallback",
+  "rust/memchr/memchr3/naive",
+  "rust/memchr-n/memchr3",
+  "rust/memchr-n/memchr3/scalar",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "small-common4"
+regex = ['a', 't', 'o', 'h']
+haystack = { path = "sherlock/small.txt" }
+count = 151
+engines = [
+  "rust/memchr-n/byteset/scalar",
+  "rust/memchr-n/byteset",
+]
+
+[[bench]]
+model = "count-bytes"
+name = "small-common-range"
+regex = '\x61\x66'
+haystack = { path = "sherlock/small.txt" }
+count = 155
+engines = [
+  "rust/memchr-n/range/scalar",
+  "rust/memchr-n/range",
+]
