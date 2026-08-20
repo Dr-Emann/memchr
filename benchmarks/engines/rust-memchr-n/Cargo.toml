@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.100"
-memchr_n = { git = "https://github.com/Dr-Emann/memchr_n.git", branch = "wide-scan-128" }
+memchr_n = { git = "https://github.com/Dr-Emann/memchr_n.git", branch = "better" }
 
 [dependencies.shared]
 path = "../../shared"

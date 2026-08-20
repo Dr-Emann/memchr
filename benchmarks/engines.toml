@@ -991,3 +991,144 @@
   [[engine.clean]]
     bin = "cargo"
     args = ["clean"]
+
+# The byte set engines search for any byte in a set of arbitrary size. Which
+# kernel `memchr_n` picks is a function of the set itself, so the benchmark
+# definitions are what choose between the nibble shuffles and the bitset probe.
+#
+# The 'onlycount' engines use the specialized counting kernel, which tallies
+# matches without reporting where they are, like `rust/memchr/memchr/onlycount`.
+
+[[engine]]
+  name = "rust/memchr-n/memchr/onlycount"
+  cwd = "./engines/rust-memchr-n"
+  [engine.version]
+    bin = "./target/release/main"
+    args = ["--version"]
+  [engine.run]
+    bin = "./target/release/main"
+    args = ["memchr-onlycount"]
+  [[engine.build]]
+    bin = "cargo"
+    args = ["build", "--release"]
+  [[engine.clean]]
+    bin = "cargo"
+    args = ["clean"]
+
+[[engine]]
+  name = "rust/memchr-n/byteset"
+  cwd = "./engines/rust-memchr-n"
+  [engine.version]
+    bin = "./target/release/main"
+    args = ["--version"]
+  [engine.run]
+    bin = "./target/release/main"
+    args = ["byteset"]
+  [[engine.build]]
+    bin = "cargo"
+    args = ["build", "--release"]
+  [[engine.clean]]
+    bin = "cargo"
+    args = ["clean"]
+
+[[engine]]
+  name = "rust/memchr-n/byteset/scalar"
+  cwd = "./engines/rust-memchr-n"
+  [engine.version]
+    bin = "./target/release/main"
+    args = ["--version"]
+  [engine.run]
+    bin = "./target/release/main"
+    args = ["byteset-scalar"]
+  [[engine.build]]
+    bin = "cargo"
+    args = ["build", "--release"]
+  [[engine.clean]]
+    bin = "cargo"
+    args = ["clean"]
+
+# Builds the finder inside the timed region, which is where a set pays for its
+# nibble tables. The byte set API has no oneshot form, so this is one build
+# amortized over one full scan, not a build per match.
+[[engine]]
+  name = "rust/memchr-n/byteset/build"
+  cwd = "./engines/rust-memchr-n"
+  [engine.version]
+    bin = "./target/release/main"
+    args = ["--version"]
+  [engine.run]
+    bin = "./target/release/main"
+    args = ["byteset-build"]
+  [[engine.build]]
+    bin = "cargo"
+    args = ["build", "--release"]
+  [[engine.clean]]
+    bin = "cargo"
+    args = ["clean"]
+
+[[engine]]
+  name = "rust/memchr-n/byteset/onlycount"
+  cwd = "./engines/rust-memchr-n"
+  [engine.version]
+    bin = "./target/release/main"
+    args = ["--version"]
+  [engine.run]
+    bin = "./target/release/main"
+    args = ["byteset-onlycount"]
+  [[engine.build]]
+    bin = "cargo"
+    args = ["build", "--release"]
+  [[engine.clean]]
+    bin = "cargo"
+    args = ["clean"]
+
+# The range engines take a single two byte needle, '<first><last>', and search
+# for any byte in that inclusive range.
+
+[[engine]]
+  name = "rust/memchr-n/range"
+  cwd = "./engines/rust-memchr-n"
+  [engine.version]
+    bin = "./target/release/main"
+    args = ["--version"]
+  [engine.run]
+    bin = "./target/release/main"
+    args = ["range"]
+  [[engine.build]]
+    bin = "cargo"
+    args = ["build", "--release"]
+  [[engine.clean]]
+    bin = "cargo"
+    args = ["clean"]
+
+[[engine]]
+  name = "rust/memchr-n/range/scalar"
+  cwd = "./engines/rust-memchr-n"
+  [engine.version]
+    bin = "./target/release/main"
+    args = ["--version"]
+  [engine.run]
+    bin = "./target/release/main"
+    args = ["range-scalar"]
+  [[engine.build]]
+    bin = "cargo"
+    args = ["build", "--release"]
+  [[engine.clean]]
+    bin = "cargo"
+    args = ["clean"]
+
+[[engine]]
+  name = "rust/memchr-n/range/onlycount"
+  cwd = "./engines/rust-memchr-n"
+  [engine.version]
+    bin = "./target/release/main"
+    args = ["--version"]
+  [engine.run]
+    bin = "./target/release/main"
+    args = ["range-onlycount"]
+  [[engine.build]]
+    bin = "cargo"
+    args = ["build", "--release"]
+  [[engine.clean]]
+    bin = "cargo"
+    args = ["clean"]
